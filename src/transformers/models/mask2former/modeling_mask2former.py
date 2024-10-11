@@ -457,7 +457,8 @@ class Mask2FormerHungarianMatcher(nn.Module):
             pred_mask = pred_mask[:, None]
 
             # Sample ground truth and predicted masks
-            point_coordinates = torch.rand(1, self.num_points, 2, device=pred_mask.device)
+            device = pred_mask.device
+            point_coordinates = torch.rand(1, self.num_points, 2, device=device)
 
             target_coordinates = point_coordinates.repeat(target_mask.shape[0], 1, 1)
             target_mask = sample_point(target_mask, target_coordinates, align_corners=False).squeeze(1)
@@ -472,8 +473,8 @@ class Mask2FormerHungarianMatcher(nn.Module):
             # final cost matrix
             cost_matrix = self.cost_mask * cost_mask + self.cost_class * cost_class + self.cost_dice * cost_dice
             # eliminate infinite values in cost_matrix to avoid the error ``ValueError: cost matrix is infeasible``
-            cost_matrix = torch.minimum(cost_matrix, torch.tensor(1e10))
-            cost_matrix = torch.maximum(cost_matrix, torch.tensor(-1e10))
+            cost_matrix = torch.minimum(cost_matrix, torch.tensor(1e10, device=device))
+            cost_matrix = torch.maximum(cost_matrix, torch.tensor(-1e10, device=device))
             # do the assigmented using the hungarian algorithm in scipy
             assigned_indices: Tuple[np.array] = linear_sum_assignment(cost_matrix.cpu())
             indices.append(assigned_indices)
